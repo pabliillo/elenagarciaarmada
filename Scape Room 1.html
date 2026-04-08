@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Scape Room Elena García Armada</title>
+<style>
+/* --- ESTILOS GENERALES --- */
+body {
+  margin:0; height:100vh; font-family:'Poppins',sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg,#0f172a,#1e3a8a);
+  color:white;
+}
+.card {
+  width:1000px; padding:30px; border-radius:25px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 60px rgba(0,0,0,0.7);
+  position: relative; text-align: center;
+  transition: all 0.3s ease;
+}
+h1 {
+  color:#93c5fd; font-size:28px; margin-bottom:20px;
+  text-shadow: 1px 1px 5px #000;
+}
+.info {
+  font-size:14px; color:#cbd5f5; margin-bottom:20px;
+  background: rgba(255,255,255,0.05); padding:10px; border-radius:8px;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+}
+.match-container {
+  display:flex; justify-content:space-between; margin-bottom:20px;
+}
+.match-column {
+  display:flex; flex-direction:column; gap:12px;
+}
+.match-item {
+  padding:12px; background: rgba(255,255,255,0.1); border-radius:10px;
+  cursor:pointer; transition:0.3s; box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+.match-item:hover { transform: scale(1.05); }
+.correct { background: rgba(34,197,94,0.5) !important; color:white; font-weight:bold;}
+.selected {border:2px solid #3b82f6;}
+#message {margin-top:20px; font-size:16px; color:#f87171; min-height:20px;}
+button {
+  margin-top:20px; padding:10px 20px; font-size:16px;
+  border:none; border-radius:8px; background:#3b82f6;
+  color:white; cursor:pointer; transition:0.3s;
+}
+button:hover { background:#2563eb; }
+#continueBtn, #continueBtn2, #continueBtn3, #continueBtn4 {display:none;}
+.sopa-container {
+  margin-top:20px; display:grid; grid-template-columns: repeat(12, 35px); gap:3px; justify-content:center;
+}
+.sopa-letter {
+  width:35px; height:35px; display:flex; align-items:center; justify-content:center;
+  background: rgba(255,255,255,0.1); border-radius:5px;
+  cursor:pointer; user-select:none; transition:0.2s; font-weight:bold; font-size:16px;
+}
+.sopa-letter:hover { transform: scale(1.1); }
+.sopa-selected {background:#3b82f6; color:white;}
+.sopa-correct {background: rgba(34,197,94,0.5); color:white;}
+.texto {font-size:16px; margin-top:20px; line-height:1.8; text-align:left;}
+.subrayado {text-decoration: underline;}
+.hueco {
+  display:inline-block; width:160px; border-bottom:2px solid #93c5fd;
+  margin:0 5px; cursor:pointer; text-align:center; color:white;
+  transition:0.3s; padding:2px;
+}
+.hueco:hover { background: rgba(255,255,255,0.1); }
+.palabras-opcion {
+  margin-top:20px; display:flex; gap:10px; flex-wrap: wrap; justify-content:center;
+}
+.palabra {
+  padding:6px 12px; background:#3b82f6; border-radius:5px; cursor:pointer; font-weight:bold;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3); transition:0.2s;
+}
+.palabra:hover { transform: scale(1.05); background:#2563eb; }
+.vf-container {margin-top:20px; display:flex; flex-direction:column; gap:15px; text-align:left;}
+.vf-item {margin-bottom:10px; background: rgba(255,255,255,0.05); padding:10px; border-radius:8px; box-shadow: inset 0 0 10px rgba(255,255,255,0.1);}
+.vf-buttons {display:flex; gap:10px; margin-top:5px;}
+.vf-buttons button {padding:5px 12px; border:none; border-radius:5px; background:#3b82f6; color:white; cursor:pointer; transition:0.3s;}
+.vf-buttons button:hover {background:#2563eb;}
+.vf-correct {background: rgba(34,197,94,0.5) !important; color:white;}
+.vf-incorrect {color:#f87171;}
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+<script>
+const card = document.getElementById('card');
+
+/* --- PANTALLA DE INICIO --- */
+function iniciarPantallaInicio(){
+    card.innerHTML=`<h1>Scape Room Elena García Armada</h1>
+    <div class="info">¡Bienvenido! Pulsa continuar para comenzar el juego.</div>
+    <button id="continueBtnInicio">Continuar</button>`;
+    document.getElementById('continueBtnInicio').onclick = iniciarUnirFrases;
+}
+
+/* --- JUEGO UNIR FRASES --- */
+function iniciarUnirFrases(){
+    card.innerHTML=`<h1>Unir frases sobre Elena García Armada</h1>
+    <div class='info'>Selecciona primero una palabra de la izquierda, luego la palabra correcta de la derecha.</div>
+    <div class='match-container' id='matchContainer'></div>
+    <div id='message'></div>
+    <button id='continueBtn'>Continuar</button>`;
+
+    const leftWords = ['Elena García Armada','Marsi Bionics','Exoesqueleto','Premio Europeo 2022'];
+    const rightWords = ['Ingeniera y roboticista española','Empresa de exoesqueletos pediátricos','Ayuda a niños a caminar','Reconocimiento internacional por innovación'];
+    const correctPairs = {'Elena García Armada':'Ingeniera y roboticista española','Marsi Bionics':'Empresa de exoesqueletos pediátricos','Exoesqueleto':'Ayuda a niños a caminar','Premio Europeo 2022':'Reconocimiento internacional por innovación'};
+
+    let matchContainer = document.getElementById('matchContainer');
+    let messageDiv = document.getElementById('message');
+    let selectedLeft = null, completed = [];
+    let continueBtn = document.getElementById('continueBtn');
+
+    let leftCol = document.createElement('div'); leftCol.className='match-column';
+    let rightCol = document.createElement('div'); rightCol.className='match-column';
+    let shuffledRight = [...rightWords].sort(()=>Math.random()-0.5);
+
+    leftWords.forEach(word=>{
+        let div = document.createElement('div'); div.className = 'match-item'; div.innerText = word;
+        div.onclick = () => { if(selectedLeft) selectedLeft.classList.remove('selected'); selectedLeft = div; div.classList.add('selected'); messageDiv.innerText=''; };
+        leftCol.appendChild(div);
+    });
+
+    shuffledRight.forEach(word=>{
+        let div = document.createElement('div'); div.className='match-item'; div.innerText=word;
+        div.onclick = () => {
+            if(!selectedLeft) return;
+            if(correctPairs[selectedLeft.innerText]===div.innerText){
+                selectedLeft.classList.add('correct'); div.classList.add('correct'); completed.push({left:selectedLeft,right:div});
+                messageDiv.innerText='';
+            } else messageDiv.innerText='Incorrecto';
+            selectedLeft.classList.remove('selected'); selectedLeft=null;
+            if(completed.length===leftWords.length) continueBtn.style.display='inline-block';
+        };
+        rightCol.appendChild(div);
+    });
+
+    matchContainer.appendChild(leftCol); matchContainer.appendChild(rightCol);
+    continueBtn.onclick = () => iniciarSopa();
+}
+
+/* --- SOPA DE LETRAS --- */
+function iniciarSopa(){
+    card.innerHTML=`<h1>Sopa de letras</h1>
+    <div class='texto' id='textoContainer'>Elena García Armada es especialista en <span class='subrayado'>robótica</span> y desarrolla <span class='subrayado'>exoesqueleto</span> para <span class='subrayado'>niños</span>. También trabaja en <span class='subrayado'>innovación</span> y <span class='subrayado'>salud</span>.</div>
+    <div class='sopa-container' id='sopaContainer'></div>
+    <div id='message'></div>
+    <button id='continueBtn2' style='display:none;'>Continuar</button>`;
+
+    const palabras=['robótica','exoesqueleto','niños','innovación','salud'];
+    const sopaContainer = document.getElementById('sopaContainer');
+    const continueBtn2 = document.getElementById('continueBtn2');
+    const message = document.getElementById('message');
+    const gridSize = 12;
+    let letters=[];
+
+    for(let i=0;i<gridSize*gridSize;i++){
+        let span = document.createElement('div'); span.className='sopa-letter';
+        span.innerText=String.fromCharCode(97+Math.floor(Math.random()*26));
+        span.dataset.palabra=''; sopaContainer.appendChild(span); letters.push(span);
+    }
+
+    palabras.forEach((palabra)=>{
+        let row=Math.floor(Math.random()*gridSize), col=Math.floor(Math.random()*(gridSize-palabra.length));
+        for(let i=0;i<palabra.length;i++){
+            letters[row*gridSize+col+i].innerText=palabra[i];
+            letters[row*gridSize+col+i].dataset.palabra=palabra;
+        }
+    });
+
+    let indices = {}; palabras.forEach(p=>indices[p]=0);
+
+    letters.forEach(span=>{
+        span.onclick=()=>{
+            let p=span.dataset.palabra; if(!p) return;
+            if(p.includes(span.innerText)){
+                span.classList.add('sopa-selected'); indices[p]++;
+                if(indices[p]>=p.length){
+                    letters.filter(l=>l.dataset.palabra===p).forEach(l=>{l.classList.remove('sopa-selected'); l.classList.add('sopa-correct');});
+                    if(document.querySelectorAll('.sopa-correct').length>=palabras.join('').length) continueBtn2.style.display='inline-block';
+                }
+                message.innerText='';
+            } else message.innerText='Incorrecto';
+        };
+    });
+
+    continueBtn2.onclick = () => iniciarVF();
+}
+
+/* --- VERDADERO O FALSO --- */
+function iniciarVF(){
+    card.innerHTML=`<h1>Verdadero o Falso</h1>
+    <div class='texto'>
+    Elena García Armada es ingeniera industrial y roboticista. Fundó Marsi Bionics, empresa que desarrolla exoesqueletos pediátricos innovadores. Su trabajo ha ayudado a niños con movilidad reducida y ha recibido reconocimientos internacionales. Además, colabora con instituciones educativas y científicas.
+    </div>
+    <div class='vf-container' id='vfContainer'></div>
+    <div id='message'></div>
+    <button id='continueBtn3' style='display:none;'>Continuar</button>`;
+
+    const frases=[
+        {texto:'Fundó Marsi Bionics.', correct:true},
+        {texto:'Desarrolla exoesqueletos pediátricos.', correct:true},
+        {texto:'Ha recibido el Premio Europeo 2022.', correct:true},
+        {texto:'No tiene formación en ingeniería.', correct:false},
+        {texto:'Colabora con instituciones educativas.', correct:true},
+        {texto:'Su trabajo está relacionado con astronomía.', correct:false}
+    ];
+
+    const vfContainer=document.getElementById('vfContainer');
+    const mensaje=document.getElementById('message');
+    const continueBtn3=document.getElementById('continueBtn3');
+
+    frases.forEach(f=>{
+        let div=document.createElement('div'); div.className='vf-item';
+        div.innerHTML=`<span>${f.texto}</span><div class='vf-buttons'><button>Verdadero</button><button>Falso</button></div>`;
+        const btns=div.querySelectorAll('button');
+        btns[0].onclick=()=> checkVF(f,true,btns[0],btns[1]);
+        btns[1].onclick=()=> checkVF(f,false,btns[1],btns[0]);
+        vfContainer.appendChild(div);
+    });
+
+    function checkVF(f,selected,clickedBtn,otherBtn){
+        if(selected===f.correct){
+            clickedBtn.classList.add('vf-correct'); clickedBtn.disabled=true; otherBtn.disabled=true;
+            mensaje.innerText='';
+        } else mensaje.innerText='Incorrecto';
+        if([...document.querySelectorAll('.vf-item')].every(d=>[...d.querySelectorAll('button')].every(b=>b.disabled))) continueBtn3.style.display='inline-block';
+    }
+
+    continueBtn3.onclick = () => iniciarTextoHuecosFinal();
+}
+
+/* --- TEXTO CON HUECOS --- */
+function iniciarTextoHuecosFinal(){
+    card.innerHTML=`<h1>Completa el texto</h1>
+    <div class='texto' id='textoContainer'>
+    Elena García Armada nació en <span class='hueco' data-answer='España'></span> y estudió <span class='hueco' data-answer='ingeniería'></span>. 
+    Fundó <span class='hueco' data-answer='Marsi Bionics'></span> y desarrolló <span class='hueco' data-answer='exoesqueletos'></span> para <span class='hueco' data-answer='niños'></span>. 
+    Ha trabajado en <span class='hueco' data-answer='robótica'></span> y <span class='hueco' data-answer='innovación'></span>. 
+    Recibió <span class='hueco' data-answer='premios'></span> y colabora con <span class='hueco' data-answer='instituciones'></span>.
+    </div>
+    <div class='palabras-opcion' id='palabrasOpciones'></div>
+    <div id='message'></div>
+    <button id='continueBtn4'>Finalizar</button>`;
+
+    const palabras=['España','ingeniería','Marsi Bionics','exoesqueletos','niños','robótica','innovación','premios','instituciones'];
+    const huecos=document.querySelectorAll('.hueco');
+    const palabrasOpciones=document.getElementById('palabrasOpciones');
+    const mensaje=document.getElementById('message');
+    const continueBtn4=document.getElementById('continueBtn4');
+
+    let indiceActual=0;
+
+    palabras.forEach(p=>{
+        let div=document.createElement('div'); div.className='palabra'; div.innerText=p;
+        div.onclick=()=>{
+            if(indiceActual>=huecos.length) return;
+            const huecoActual = huecos[indiceActual];
+            if(p===huecoActual.dataset.answer){
+                huecoActual.innerText=p; huecoActual.style.color='#22c55e'; div.style.display='none'; mensaje.innerText=''; indiceActual++;
+            } else mensaje.innerText='Incorrecto';
+            if(indiceActual===huecos.length) {
+                continueBtn4.style.display='inline-block';
+            }
+        };
+        palabrasOpciones.appendChild(div);
+    });
+
+    continueBtn4.onclick = () => {
+        card.innerHTML=`<h1>¡Has completado el Scape Room!</h1>
+        <div class='info'>¡Felicidades! Has superado todos los minijuegos.</div>`;
+    }
+}
+
+/* --- INICIAR JUEGO --- */
+iniciarPantallaInicio();
+</script>
+</body>
+</html>
